@@ -111,7 +111,7 @@ $(function(){
 			"dblclick .link"  : "edit",
 			"click a.destroy" : "clear",
 			"keypress .edit"  : "updateOnEnter",
-			"blur .iten"      : "close"
+			"blur .link"      : "close"
 	    },
 	    initialize: function() {
 			this.listenTo(this.model, 'change', this.render);
@@ -130,18 +130,15 @@ $(function(){
 			this.aLink.addClass("hidden");
     	},
     	close: function() {
-    		debugger;
-			var name 		= this.input.eq(0).val();
-			var address 	= this.input.eq(1).val();
-			var description = this.input.eq(2).val();
-			var category 	= this.input.eq(3).val();
+			var name 		= $(".linkName:visible").val();
+			var address 	= $(".linkAddress:visible").val();
+			var description = $(".linkDescription:visible").val();
+			var category 	= $(".linkCategory:visible").val();
 
 
 			if (!name || !address || !category) {
 				this.clear();
 			} else {
-				this.model.save({name: value});
-
 				this.model.save({
 	      			name 		: name,
 	      			address		: address,
@@ -153,7 +150,6 @@ $(function(){
 				this.$el.removeClass("editing");
 				this.input.addClass("hidden");
 				this.aLink.removeClass("hidden");
-				this.aLink.text(value);
 			}
 		},
 		updateOnEnter	: function(e) {
@@ -230,12 +226,10 @@ $(function(){
 			}
     	},
     	addOneLink: function(link) {
-    		console.log("addOneLink");
       		var view = new LinkView({model: link});
       		this.$("#links table tbody").append(view.render().el);
     	},
     	createLinkOnEnter: function(e) {
-
       		if (!(this.inputLinkName.val().trim() !== '')) return;
       		if (!(this.inputLinkAddress.val().trim() !== '')) return;
       		if (!(this.inputLinkDescription.val().trim() !== '')) return;
