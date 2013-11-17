@@ -1,0 +1,4 @@
+&lt;% if (done) { %&gt;
+  &lt;a id="clear-completed"&gt;Clear &lt;%= done %&gt; completed &lt;%= done == 1 ? 'item' : 'items' %&gt;&lt;/a&gt;
+&lt;% } %&gt;
+&lt;div class="todo-count"&gt;&lt;b&gt;&lt;%= remaining %&gt;&lt;/b&gt; &lt;%= remaining == 1 ? 'item' : 'items' %&gt; left&lt;/div&gt;
