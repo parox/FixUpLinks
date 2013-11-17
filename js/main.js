@@ -76,7 +76,7 @@ $(function(){
 	//Application ####
 
 	var AppView = Backbone.View.extend({
-		el: $("#category"),
+		el: $("#main"),
 		statsTemplate: _.template($('#stats-template').html()),
 		events: {
       		"keypress #new-category":  "createOnEnter",
@@ -84,14 +84,12 @@ $(function(){
       		"click #toggle-all": "toggleAllComplete"
     	},
     	initialize: function() {
+    		
+    		//	Load Category section
 			this.input = this.$("#new-category");
-
 			this.listenTo(Categories, 'add', this.addOne);
-			//this.listenTo(Categories, 'reset', this.addAll);
 			this.listenTo(Categories, 'all', this.render);
-
 			this.main = $('#categoryList');
-
 			Categories.fetch();
     	},
     	render: function() {
