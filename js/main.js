@@ -1,11 +1,11 @@
 $(function(){
 
+	//###Category's Section
 	//Category Model
 	var Category = Backbone.Model.extend({
 		defaults: function() {
 		  return {
 		    name		: "empty category...",
-		    description	: "",
 		    order 		: Categories.nextOrder()
 		  };
 		}
@@ -73,44 +73,144 @@ $(function(){
     	}
     });
 
-	//Application ####
+	//###Link's Section
+	//Link Model
+	var Link = Backbone.Model.extend({
+		defaults: function() {
+		  return {
+		    name		: "empty link...",
+		    address		: "",
+		    description	: "",
+		    category 	: null,
+		    order 		: Links.nextOrder()
+		  };
+		}
+	});
+
+	//Link Collection
+	var LinkList = Backbone.Collection.extend({
+		model: Link,
+		localStorage: new Backbone.LocalStorage("link-list"),
+		all: function() {
+			return this.where();
+	    },
+	    nextOrder: function() {
+			if (!this.length) return 1;
+			return this.last().get('order') + 1;
+	    },
+	    comparator: 'order'
+	});
+
+	var Links = new LinkList;
+
+	//Link View
+	var LinkView = Backbone.View.extend({
+		tagName:  "tr",
+		template: _.template($('#item-link').html()),
+		events: {
+			"dblclick .link"  : "edit",
+			"click a.destroy" : "clear",
+			"keypress .edit"  : "updateOnEnter",
+			"blur .iten"      : "close"
+	    },
+	    initialize: function() {
+			this.listenTo(this.model, 'change', this.render);
+			this.listenTo(this.model, 'destroy', this.remove);
+    	},
+    	render: function() {
+			this.$el.html(this.template(this.model.toJSON()));
+			this.input = this.$('.edit');
+			this.aLink = this.$('.link');
+			return this;
+	    },
+	    edit: function() {
+	    	this.$el.addClass("editing");
+			this.input.removeClass("hidden");
+			this.input.focus();
+			this.aLink.addClass("hidden");
+    	},
+    	close: function() {
+    		debugger;
+			var name 		= this.input.eq(0).val();
+			var address 	= this.input.eq(1).val();
+			var description = this.input.eq(2).val();
+			var category 	= this.input.eq(3).val();
+
+
+			if (!name || !address || !category) {
+				this.clear();
+			} else {
+				this.model.save({name: value});
+
+				this.model.save({
+	      			name 		: name,
+	      			address		: address,
+				    description	: description,
+				    category 	: category
+	      		});
+
+
+				this.$el.removeClass("editing");
+				this.input.addClass("hidden");
+				this.aLink.removeClass("hidden");
+				this.aLink.text(value);
+			}
+		},
+		updateOnEnter	: function(e) {
+			if (e.keyCode == 13) this.close();
+    	},
+    	clear: function() {
+    		this.model.destroy();
+    	}
+    });
+
+
+	//###Application Section
 
 	var AppView = Backbone.View.extend({
 		el: $("#main"),
-		statsTemplate: _.template($('#stats-template').html()),
 		events: {
-      		"keypress #new-category":  "createOnEnter",
-      		"click #clear-completed": "clearCompleted",
-      		"click #toggle-all": "toggleAllComplete"
+			//Categorys event
+      		"keypress #new-category":  "createCategoryOnEnter",
+      		//Links event
+      		"click #createLink":  "createLinkOnEnter"
     	},
     	initialize: function() {
     		
-    		//	Load Category section
+    		//##Load Category section
 			this.input = this.$("#new-category");
-			this.listenTo(Categories, 'add', this.addOne);
-			this.listenTo(Categories, 'all', this.render);
-			this.main = $('#categoryList');
+			this.listenTo(Categories, 'add', this.addOneCategory);
+			this.listenTo(Categories, 'all', this.renderCategory);
+			this.mainCategory = $('#categoryList table');
+			this.emptyCategory= $('#categoryList .alert');
 			Categories.fetch();
-    	},
-    	render: function() {
-			var done = Categories.all().length;
 
+			//##Load Link section
+			this.inputLinkName = this.$("#linkName");
+			this.inputLinkAddress = this.$("#linkAddress");
+			this.inputLinkDescription = this.$("#linkDescription");
+			this.inputLinkCategory = this.$("#linkCategory");
+			this.listenTo(Links, 'add', this.addOneLink);
+			this.listenTo(Links, 'all', this.renderLink);
+			this.listenTo(Links, 'all', this.fetchByName);
+			this.mainLink = $('#links table tbody');
+			this.emptyLink= $('#links .alert');
+			Links.fetch();
+    	},
+    	renderCategory: function() {
 			if (Categories.length) {
-				this.main.show();
+				this.mainCategory.show();
+				this.emptyCategory.hide();
 			} else {
-				this.main.hide();
+				this.mainCategory.hide();
+				this.emptyCategory.show();
 			}
     	},
-    	addOne: function(category) {
-    		console.log("addOne");
+    	addOneCategory: function(category) {
       		var view = new CategoryView({model: category});
       		this.$("#categoryList table tbody").append(view.render().el);
     	},
-    	addAll: function() {
-      		console.log("addAll");
-      		//Categories.each(this.addOne, this);
-    	},
-    	createOnEnter: function(e) {
+    	createCategoryOnEnter: function(e) {
       		if (e.keyCode !== 13) return;
       		if (!this.input.val()) return;
       		if (this.input.val().trim() === "") return;
@@ -118,19 +218,42 @@ $(function(){
       		Categories.create({name: this.input.val()});
       		this.input.val('');
     	},
+    	//	Link methods
+    	renderLink: function() {
+    		if (Links.length) {
+				this.mainLink.show();
+				this.emptyLink.hide();
+				
+			} else {
+				this.mainLink.hide();
+				this.emptyLink.show();
+			}
+    	},
+    	addOneLink: function(link) {
+    		console.log("addOneLink");
+      		var view = new LinkView({model: link});
+      		this.$("#links table tbody").append(view.render().el);
+    	},
+    	createLinkOnEnter: function(e) {
 
-    	clearCompleted: function() {
-			console.log("clearCompleted");
-			//_.invoke(Categories.done(), 'destroy');
-			//return false;
-	    },
+      		if (!(this.inputLinkName.val().trim() !== '')) return;
+      		if (!(this.inputLinkAddress.val().trim() !== '')) return;
+      		if (!(this.inputLinkDescription.val().trim() !== '')) return;
+      		if (!(this.inputLinkCategory.val().trim() !== '')) return;
 
-	    toggleAllComplete: function () {
-			console.log("toggleAllComplete");
-			//var done = this.allCheckbox.checked;
-			//Categories.each(function (todo) { todo.save({'done': done}); });
-	    }
+      		Links.create({
+      			name 		: this.inputLinkName.val(),
+      			address		: this.inputLinkAddress.val(),
+			    description	: this.inputLinkDescription.val(),
+			    category 	: this.inputLinkCategory.val()
+      		});
 
+      		//Clean Fields
+      		this.inputLinkName.val("")
+      		this.inputLinkAddress.val("")
+      		this.inputLinkDescription.val("")
+      		this.inputLinkCategory.val("")
+    	}
 	});
 
 	var App = new AppView();

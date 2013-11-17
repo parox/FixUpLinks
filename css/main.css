@@ -21,3 +21,7 @@
 .right{
 	float: right;
 }
+
+form{
+	margin-bottom: 20px;
+}
